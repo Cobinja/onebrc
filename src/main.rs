@@ -53,7 +53,6 @@ fn main() {
     };
     
     let length: usize = metadata(filename.clone()).expect("Unable to query file details").len().try_into().expect("Couldn't convert len from u64 to usize");
-    let block_size: usize = 16_777_216; //16M
     let cores: usize = std::thread::available_parallelism().unwrap().get();
     // How much each thread should read
     let division: usize = ((length / cores) as f64).ceil() as usize;
@@ -88,27 +87,15 @@ fn main() {
             scope.spawn(move || {
                 // read chunk with the size defined by starting_offsets
                 let mut thread_file = File::open(&filename).expect("Unable to open file");
-                let mut read_length: usize = 1;
-                let mut read_total: usize = 0;
                 
                 let offset: usize = starting_offsets[i];
                 let size = match i < starting_offsets.len() - 1 {
                     true => starting_offsets[i + 1] - starting_offsets[i],
                     false => length - starting_offsets[i],
                 };
-                let mut contents: Vec<u8> = vec![];
+                let mut contents: Vec<u8> = vec![0_u8; size];
                 thread_file.seek(SeekFrom::Start(offset as u64)).expect("Couldn't seek to position in file");
-                while (read_total < size) && (read_length != 0) {
-                    let mut block_content = vec![0_u8; block_size];
-                    // Handle the case when the bytes remaining to be read are
-                    // less than the block size
-                    if read_total + block_size > size as usize {
-                        block_content.truncate(size as usize - read_total);
-                    }
-                    read_length = thread_file.read(&mut block_content).expect("Couldn't read file");
-                    contents.append(&mut block_content);
-                    read_total += read_length;
-                }
+                thread_file.read(&mut contents).expect("Couldn't read file");
                 
                 // process data
                 if *(contents.last().unwrap()) == b'\n' {
