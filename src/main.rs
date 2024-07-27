@@ -1,5 +1,5 @@
 use core::str;
-use std::{collections::BTreeMap, fmt::{Debug, Display}, fs::{metadata, File}, io::{Read, Seek, SeekFrom}, sync::{Arc, Mutex}, thread};
+use std::{collections::{BTreeMap, HashMap}, fmt::{Debug, Display}, fs::{metadata, File}, io::{Read, Seek, SeekFrom}, sync::{Arc, Mutex}, thread};
 struct Station {
     min: f64,
     max: f64,
@@ -101,7 +101,7 @@ fn main() {
                 if *(contents.last().unwrap()) == b'\n' {
                     contents.pop();
                 }
-                let mut block_results = BTreeMap::<&[u8], Station>::new();
+                let mut block_results = HashMap::<&[u8], Station>::new();
                 let content_len = contents.len();
                 let mut i: usize = 0;
                 let mut last_idx: usize = 0;
